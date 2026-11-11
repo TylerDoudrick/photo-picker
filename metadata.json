@@ -1,0 +1,6 @@
+{
+  "name": "TV Photo Picker",
+  "description": "Google TV photo picker that connects to Google Photos albums to select high-resolution TV wallpapers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
