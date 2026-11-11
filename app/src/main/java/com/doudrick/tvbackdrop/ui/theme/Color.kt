@@ -1,4 +1,4 @@
-package com.example.ui.theme
+package com.doudrick.tvbackdrop.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

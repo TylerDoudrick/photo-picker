@@ -1,4 +1,4 @@
-package com.example.util
+package com.doudrick.tvbackdrop.util
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap

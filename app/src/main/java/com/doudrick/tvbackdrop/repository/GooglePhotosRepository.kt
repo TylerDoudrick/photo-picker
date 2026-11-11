@@ -1,14 +1,14 @@
-package com.example.repository
+package com.doudrick.tvbackdrop.repository
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.example.model.AuthState
-import com.example.model.DeviceAuthInfo
-import com.example.model.PhotoAlbum
-import com.example.model.PhotoItem
+import com.doudrick.tvbackdrop.model.AuthState
+import com.doudrick.tvbackdrop.model.DeviceAuthInfo
+import com.doudrick.tvbackdrop.model.PhotoAlbum
+import com.doudrick.tvbackdrop.model.PhotoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,17 +28,27 @@ class GooglePhotosRepository(private val context: Context) {
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    private val _authState = MutableStateFlow(
-        AuthState(
-            isConnected = true,
-            accountEmail = "tyler.photos@gmail.com",
-            deviceAuth = DeviceAuthInfo(
-                deviceCode = "dev_code_" + UUID.randomUUID().toString().take(8),
-                userCode = "WDGQ-7842",
-                verificationUrl = "https://www.google.com/device"
+    private val prefs = context.getSharedPreferences("tv_photo_picker_prefs", Context.MODE_PRIVATE)
+
+    private val initialAuth: AuthState
+        get() {
+            val isConnected = prefs.getBoolean("is_connected", false)
+            val email = prefs.getString("account_email", null)
+            val randomSuffix = (1000..9999).random()
+            val userCode = "WDGQ-$randomSuffix"
+            return AuthState(
+                isConnected = isConnected,
+                accountEmail = if (isConnected) email else null,
+                deviceAuth = DeviceAuthInfo(
+                    deviceCode = "dev_code_" + UUID.randomUUID().toString().take(8),
+                    userCode = userCode,
+                    verificationUrl = "https://www.google.com/device?user_code=$userCode"
+                ),
+                isPolling = !isConnected
             )
-        )
-    )
+        }
+
+    private val _authState = MutableStateFlow(initialAuth)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     // Pre-loaded high-resolution albums with exact photo counts
@@ -272,7 +282,12 @@ class GooglePhotosRepository(private val context: Context) {
         return info
     }
 
-    fun completeDeviceAuthorization(email: String = "tyler.photos@gmail.com") {
+    fun completeDeviceAuthorization(email: String = "Tyler.Doudrick@gmail.com") {
+        prefs.edit()
+            .putBoolean("is_connected", true)
+            .putString("account_email", email)
+            .apply()
+
         _authState.value = _authState.value.copy(
             isConnected = true,
             accountEmail = email,
@@ -281,6 +296,7 @@ class GooglePhotosRepository(private val context: Context) {
     }
 
     fun disconnect() {
+        prefs.edit().clear().apply()
         _authState.value = AuthState(
             isConnected = false,
             accountEmail = null,

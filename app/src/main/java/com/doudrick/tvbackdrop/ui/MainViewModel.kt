@@ -1,13 +1,13 @@
-package com.example.ui
+package com.doudrick.tvbackdrop.ui
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.model.AuthState
-import com.example.model.PhotoAlbum
-import com.example.model.PhotoItem
-import com.example.repository.GooglePhotosRepository
+import com.doudrick.tvbackdrop.model.AuthState
+import com.doudrick.tvbackdrop.model.PhotoAlbum
+import com.doudrick.tvbackdrop.model.PhotoItem
+import com.doudrick.tvbackdrop.repository.GooglePhotosRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +36,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isDownloading = MutableStateFlow(false)
     val isDownloading: StateFlow<Boolean> = _isDownloading.asStateFlow()
+
+    private val _isGuestMode = MutableStateFlow(false)
+    val isGuestMode: StateFlow<Boolean> = _isGuestMode.asStateFlow()
 
     private val _showQrSheet = MutableStateFlow(false)
     val showQrSheet: StateFlow<Boolean> = _showQrSheet.asStateFlow()
@@ -71,14 +74,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _showQrSheet.value = show
     }
 
-    fun simulateConnect() {
-        repository.completeDeviceAuthorization("tyler.photos@gmail.com")
-        _statusMessage.value = "Connected to Google Photos"
+    fun signInWithGoogle(email: String = "Tyler.Doudrick@gmail.com") {
+        repository.completeDeviceAuthorization(email)
+        _isGuestMode.value = false
         _showQrSheet.value = false
+        _statusMessage.value = "Connected as $email"
+        loadAlbums()
+    }
+
+    fun simulateConnect() {
+        signInWithGoogle("Tyler.Doudrick@gmail.com")
+    }
+
+    fun refreshPairingCode() {
+        repository.generateNewDeviceCode()
+        _statusMessage.value = "New pairing code generated"
+    }
+
+    fun enterGuestMode() {
+        _isGuestMode.value = true
+        loadAlbums()
+    }
+
+    fun exitGuestMode() {
+        _isGuestMode.value = false
+        backToAlbums()
     }
 
     fun disconnect() {
         repository.disconnect()
+        _isGuestMode.value = false
+        _showQrSheet.value = false
+        backToAlbums()
         _statusMessage.value = "Disconnected from Google Photos"
     }
 

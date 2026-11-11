@@ -1,4 +1,4 @@
-package com.example.ui
+package com.doudrick.tvbackdrop.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.TvFocusBorder
+import com.doudrick.tvbackdrop.ui.theme.TvFocusBorder
 
 /**
  * Modifier designed specifically for Google TV 10-foot remote control experience.

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "TV Photo Picker"
+rootProject.name = "TV Backdrop Photos"
 
 include(":app")

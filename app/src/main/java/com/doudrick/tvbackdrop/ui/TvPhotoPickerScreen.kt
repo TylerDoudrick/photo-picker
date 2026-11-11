@@ -1,4 +1,4 @@
-package com.example.ui
+package com.doudrick.tvbackdrop.ui
 
 import android.app.WallpaperManager
 import android.graphics.Bitmap
@@ -31,7 +31,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Wallpaper
@@ -63,20 +67,20 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.example.model.PhotoItem
-import com.example.ui.components.AlbumCard
-import com.example.ui.components.PhotoThumbnailCard
-import com.example.ui.components.QrCodeCard
-import com.example.ui.theme.GoogleBlue
-import com.example.ui.theme.GoogleBlueLight
-import com.example.ui.theme.GoogleGreen
-import com.example.ui.theme.TvBackground
-import com.example.ui.theme.TvFocusBorder
-import com.example.ui.theme.TvSurface
-import com.example.ui.theme.TvSurfaceHighlight
-import com.example.ui.theme.TvSurfaceVariant
-import com.example.ui.theme.TvTextPrimary
-import com.example.ui.theme.TvTextSecondary
+import com.doudrick.tvbackdrop.model.PhotoItem
+import com.doudrick.tvbackdrop.ui.components.AlbumCard
+import com.doudrick.tvbackdrop.ui.components.PhotoThumbnailCard
+import com.doudrick.tvbackdrop.ui.components.QrCodeCard
+import com.doudrick.tvbackdrop.ui.theme.GoogleBlue
+import com.doudrick.tvbackdrop.ui.theme.GoogleBlueLight
+import com.doudrick.tvbackdrop.ui.theme.GoogleGreen
+import com.doudrick.tvbackdrop.ui.theme.GoogleYellow
+import com.doudrick.tvbackdrop.ui.theme.TvBackground
+import com.doudrick.tvbackdrop.ui.theme.TvSurface
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceHighlight
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceVariant
+import com.doudrick.tvbackdrop.ui.theme.TvTextPrimary
+import com.doudrick.tvbackdrop.ui.theme.TvTextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -96,6 +100,7 @@ fun TvPhotoPickerScreen(
     val photos by viewModel.photos.collectAsState()
     val isPickerMode by viewModel.isPickerMode.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
+    val isGuestMode by viewModel.isGuestMode.collectAsState()
     val showQrSheet by viewModel.showQrSheet.collectAsState()
     val previewPhoto by viewModel.previewPhoto.collectAsState()
 
@@ -105,9 +110,23 @@ fun TvPhotoPickerScreen(
             previewPhoto != null -> viewModel.closePreview()
             selectedAlbum != null -> viewModel.backToAlbums()
             showQrSheet -> viewModel.toggleQrSheet(false)
+            isGuestMode -> viewModel.exitGuestMode()
         }
     }
 
+    // 1. If not connected and not explicitly in guest demo mode, show dedicated TV Sign In & QR screen
+    if (!authState.isConnected && !isGuestMode) {
+        TvSignInScreen(
+            authState = authState,
+            onSignIn = { email -> viewModel.signInWithGoogle(email) },
+            onRefreshCode = { viewModel.refreshPairingCode() },
+            onExploreAsGuest = { viewModel.enterGuestMode() },
+            modifier = modifier
+        )
+        return
+    }
+
+    // 2. Main Authenticated / Active Photo Picker Experience
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -119,13 +138,24 @@ fun TvPhotoPickerScreen(
             TvTopBar(
                 isPickerMode = isPickerMode,
                 isConnected = authState.isConnected,
+                isGuestMode = isGuestMode,
                 accountEmail = authState.accountEmail,
+                onSignIn = { viewModel.exitGuestMode() },
+                onSignOut = { viewModel.disconnect() },
                 onToggleQr = { viewModel.toggleQrSheet(!showQrSheet) }
             )
 
+            // Guest Mode Alert Banner
+            if (isGuestMode && !authState.isConnected) {
+                Spacer(modifier = Modifier.height(12.dp))
+                GuestModeBanner(
+                    onSignIn = { viewModel.exitGuestMode() }
+                )
+            }
+
             Spacer(modifier = Modifier.height(18.dp))
 
-            // QR Code Connection Overlay
+            // QR Code Connection Overlay (when requested in active mode)
             AnimatedVisibility(
                 visible = showQrSheet,
                 enter = fadeIn(),
@@ -145,6 +175,8 @@ fun TvPhotoPickerScreen(
                     // Album Selection View
                     AlbumSelectionSection(
                         albums = albums,
+                        isConnected = authState.isConnected,
+                        accountEmail = authState.accountEmail,
                         onSelectAlbum = { viewModel.selectAlbum(it) }
                     )
                 } else {
@@ -225,10 +257,58 @@ fun TvPhotoPickerScreen(
 }
 
 @Composable
+private fun GuestModeBanner(
+    onSignIn: () -> Unit
+) {
+    Surface(
+        color = GoogleYellow.copy(alpha = 0.15f),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = GoogleYellow,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Demo Mode: Browsing sample albums without sign in. Connect your Google account to sync your personal library.",
+                    color = TvTextPrimary,
+                    fontSize = 13.sp
+                )
+            }
+
+            Button(
+                onClick = onSignIn,
+                modifier = Modifier
+                    .testTag("btn_banner_sign_in")
+                    .tvFocusable(shape = RoundedCornerShape(8.dp), onClick = onSignIn),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue)
+            ) {
+                Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Sign In Now", fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
 private fun TvTopBar(
     isPickerMode: Boolean,
     isConnected: Boolean,
+    isGuestMode: Boolean,
     accountEmail: String?,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit,
     onToggleQr: () -> Unit
 ) {
     Row(
@@ -268,41 +348,127 @@ private fun TvTopBar(
                 }
             }
             Text(
-                text = "Connect to Google Photos and select high-resolution TV wallpapers",
+                text = if (isConnected) "Connected to $accountEmail • High-resolution TV wallpapers" else "Demo Mode • High-resolution sample wallpapers",
                 color = TvTextSecondary,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(start = 34.dp, top = 2.dp)
             )
         }
 
-        // Account / QR Button
-        Surface(
-            modifier = Modifier
-                .testTag("btn_top_qr_account")
-                .tvFocusable(
-                    shape = RoundedCornerShape(12.dp),
-                    onClick = onToggleQr
-                ),
-            color = if (isConnected) TvSurfaceVariant else GoogleBlue.copy(alpha = 0.2f),
-            shape = RoundedCornerShape(12.dp)
+        // Account / Actions Group
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCode,
-                    contentDescription = "QR Account Setup",
-                    tint = if (isConnected) GoogleGreen else GoogleBlueLight,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isConnected) "Photos: ${accountEmail?.substringBefore('@') ?: "Connected"}" else "Connect via Phone QR",
-                    color = TvTextPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            if (isConnected) {
+                // Connected Account Chip
+                Surface(
+                    color = GoogleGreen.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = GoogleGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = accountEmail ?: "Tyler.Doudrick@gmail.com",
+                            color = GoogleGreen,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // QR Pair Button
+                Surface(
+                    modifier = Modifier
+                        .testTag("btn_top_qr_account")
+                        .tvFocusable(
+                            shape = RoundedCornerShape(12.dp),
+                            onClick = onToggleQr
+                        ),
+                    color = TvSurfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "QR Device Details",
+                            tint = TvTextPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Pair Info",
+                            color = TvTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Sign Out Button (returns to TV Sign In screen)
+                Surface(
+                    modifier = Modifier
+                        .testTag("btn_top_sign_out")
+                        .tvFocusable(
+                            shape = RoundedCornerShape(12.dp),
+                            onClick = onSignOut
+                        ),
+                    color = TvSurfaceHighlight,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Sign Out",
+                            tint = TvTextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Sign Out",
+                            color = TvTextSecondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else {
+                // In Guest Mode: provide prominent Sign In button
+                Button(
+                    onClick = onSignIn,
+                    modifier = Modifier
+                        .testTag("btn_top_sign_in_guest")
+                        .tvFocusable(
+                            shape = RoundedCornerShape(12.dp),
+                            onClick = onSignIn
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCode,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Connect Account via QR", fontSize = 13.sp, color = Color.White)
+                }
             }
         }
     }
@@ -310,8 +476,10 @@ private fun TvTopBar(
 
 @Composable
 private fun AlbumSelectionSection(
-    albums: List<com.example.model.PhotoAlbum>,
-    onSelectAlbum: (com.example.model.PhotoAlbum) -> Unit
+    albums: List<com.doudrick.tvbackdrop.model.PhotoAlbum>,
+    isConnected: Boolean,
+    accountEmail: String?,
+    onSelectAlbum: (com.doudrick.tvbackdrop.model.PhotoAlbum) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -321,7 +489,7 @@ private fun AlbumSelectionSection(
         ) {
             Column {
                 Text(
-                    text = "Google Photos Albums",
+                    text = if (isConnected) "Google Photos Albums" else "Sample Wallpapers (Demo)",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = TvTextPrimary,
@@ -329,7 +497,11 @@ private fun AlbumSelectionSection(
                     )
                 )
                 Text(
-                    text = "Select an album using your TV remote to view its wallpapers",
+                    text = if (isConnected) {
+                        "Albums from $accountEmail • Select an album to view 4K wallpapers"
+                    } else {
+                        "Previewing demo albums • Sign in via QR to view your own Google Photos"
+                    },
                     color = TvTextSecondary,
                     fontSize = 13.sp
                 )

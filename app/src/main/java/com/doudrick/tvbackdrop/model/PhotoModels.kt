@@ -1,4 +1,4 @@
-package com.example.model
+package com.doudrick.tvbackdrop.model
 
 data class PhotoAlbum(
     val id: String,

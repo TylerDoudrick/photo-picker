@@ -1,4 +1,4 @@
-package com.example.ui.components
+package com.doudrick.tvbackdrop.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,13 +33,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.model.PhotoAlbum
-import com.example.ui.theme.GoogleBlueLight
-import com.example.ui.theme.TvSurface
-import com.example.ui.theme.TvSurfaceVariant
-import com.example.ui.theme.TvTextPrimary
-import com.example.ui.theme.TvTextSecondary
-import com.example.ui.tvFocusable
+import com.doudrick.tvbackdrop.model.PhotoAlbum
+import com.doudrick.tvbackdrop.ui.theme.GoogleBlueLight
+import com.doudrick.tvbackdrop.ui.theme.TvSurface
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceVariant
+import com.doudrick.tvbackdrop.ui.theme.TvTextPrimary
+import com.doudrick.tvbackdrop.ui.theme.TvTextSecondary
+import com.doudrick.tvbackdrop.ui.tvFocusable
 
 /**
  * Basic Album Card designed to user specifications:

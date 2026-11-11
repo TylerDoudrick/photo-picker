@@ -1,4 +1,4 @@
-package com.example.ui.components
+package com.doudrick.tvbackdrop.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,17 +38,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.model.AuthState
-import com.example.ui.theme.GoogleBlue
-import com.example.ui.theme.GoogleBlueLight
-import com.example.ui.theme.GoogleGreen
-import com.example.ui.theme.TvSurface
-import com.example.ui.theme.TvSurfaceHighlight
-import com.example.ui.theme.TvSurfaceVariant
-import com.example.ui.theme.TvTextPrimary
-import com.example.ui.theme.TvTextSecondary
-import com.example.ui.tvFocusable
-import com.example.util.QrCodeGenerator
+import com.doudrick.tvbackdrop.model.AuthState
+import com.doudrick.tvbackdrop.ui.theme.GoogleBlue
+import com.doudrick.tvbackdrop.ui.theme.GoogleBlueLight
+import com.doudrick.tvbackdrop.ui.theme.GoogleGreen
+import com.doudrick.tvbackdrop.ui.theme.TvSurface
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceHighlight
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceVariant
+import com.doudrick.tvbackdrop.ui.theme.TvTextPrimary
+import com.doudrick.tvbackdrop.ui.theme.TvTextSecondary
+import com.doudrick.tvbackdrop.ui.tvFocusable
+import com.doudrick.tvbackdrop.util.QrCodeGenerator
 
 @Composable
 fun QrCodeCard(

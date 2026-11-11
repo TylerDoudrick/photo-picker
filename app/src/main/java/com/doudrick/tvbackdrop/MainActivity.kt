@@ -1,4 +1,4 @@
-package com.example
+package com.doudrick.tvbackdrop
 
 import android.app.Activity
 import android.content.Intent
@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.ui.MainViewModel
-import com.example.ui.TvPhotoPickerScreen
-import com.example.ui.theme.TvBackground
-import com.example.ui.theme.TvPhotoPickerTheme
+import com.doudrick.tvbackdrop.ui.MainViewModel
+import com.doudrick.tvbackdrop.ui.TvPhotoPickerScreen
+import com.doudrick.tvbackdrop.ui.theme.TvBackground
+import com.doudrick.tvbackdrop.ui.theme.TvPhotoPickerTheme
 
 class MainActivity : ComponentActivity() {
 

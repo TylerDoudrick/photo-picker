@@ -1,4 +1,4 @@
-package com.example.ui.components
+package com.doudrick.tvbackdrop.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,9 +23,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.model.PhotoItem
-import com.example.ui.theme.TvSurfaceVariant
-import com.example.ui.tvFocusable
+import com.doudrick.tvbackdrop.model.PhotoItem
+import com.doudrick.tvbackdrop.ui.theme.TvSurfaceVariant
+import com.doudrick.tvbackdrop.ui.tvFocusable
 
 @Composable
 fun PhotoThumbnailCard(
